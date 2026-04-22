@@ -1,0 +1,5 @@
+path: /Users/jianglinyi/Desktop/药物分析学实验/runs/yolo_spot_dataset
+train: images/train
+val: images/val
+names:
+  0: spot

@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>铬标准溶液浓度识别</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #20242a;
+      --muted: #64707d;
+      --line: #d9dee6;
+      --accent: #176b87;
+      --accent-dark: #0f4f64;
+      --danger: #b42318;
+      --warn: #996600;
+      --ok: #18794e;
+      --soft: #eef4f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      letter-spacing: 0;
+    }
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 18px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 650;
+    }
+    main {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 22px auto 44px;
+    }
+    button, input {
+      font: inherit;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 6px;
+      min-height: 38px;
+      padding: 8px 13px;
+      cursor: pointer;
+    }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    button.primary:hover { background: var(--accent-dark); }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+    }
+    input[type="number"], input[type="file"], input[type="text"] {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel);
+      padding: 7px 9px;
+    }
+    .status {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px;
+      padding: 3px 10px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .pill.ok { color: var(--ok); background: #edf8f3; border-color: #cde8dc; }
+    .pill.warn { color: var(--warn); background: #fff8e6; border-color: #f1d58f; }
+    .pill.bad { color: var(--danger); background: #fff1f0; border-color: #f3c3bd; }
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .tab {
+      border: 0;
+      border-bottom: 3px solid transparent;
+      border-radius: 0;
+      background: transparent;
+      padding: 12px 18px 10px;
+      min-height: 42px;
+      color: var(--muted);
+    }
+    .tab.active {
+      border-color: var(--accent);
+      color: var(--text);
+      font-weight: 650;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+    section.panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    h2 {
+      margin: 0 0 14px;
+      font-size: 17px;
+    }
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+    .group-list {
+      margin-top: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .group-item, .result-block {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfd;
+    }
+    .group-item {
+      display: grid;
+      gap: 10px;
+    }
+    .sample-row {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+    .sample-thumb {
+      width: 76px;
+      height: 76px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #eef1f4;
+    }
+    .group-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 650;
+    }
+    .group-title span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .group-title button {
+      min-height: 28px;
+      padding: 3px 8px;
+      color: var(--danger);
+      flex: 0 0 auto;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .results {
+      display: grid;
+      gap: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      padding: 8px 7px;
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      background: #fafbfc;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .metric {
+      border-left: 3px solid var(--accent);
+      padding: 8px 10px;
+      background: #f7fbfc;
+    }
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+    .reject-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .reject-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .reject-item img, .overlay {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #eef1f4;
+    }
+    .reject-body {
+      padding: 10px;
+      font-size: 13px;
+    }
+    .message {
+      border-radius: 8px;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+    }
+    .message.error {
+      background: #fff1f0;
+      border-color: #f3c3bd;
+      color: var(--danger);
+    }
+    .message.ok {
+      background: #edf8f3;
+      border-color: #cde8dc;
+      color: var(--ok);
+    }
+    .hidden { display: none !important; }
+    @media (max-width: 860px) {
+      header { align-items: flex-start; flex-direction: column; padding: 16px; }
+      main { width: min(100vw - 20px, 720px); }
+      .layout { grid-template-columns: 1fr; }
+      .grid2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>铬标准溶液浓度识别</h1>
+      <div class="muted">本地训练与预测工具</div>
+    </div>
+    <div class="status" id="modelStatus">
+      <span class="pill">正在读取模型状态</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="tabs">
+      <button class="tab active" data-tab="train">训练</button>
+      <button class="tab" data-tab="predict">预测</button>
+    </div>
+
+    <div id="trainTab" class="layout">
+      <section class="panel">
+        <h2>添加训练样本</h2>
+        <label for="userNameInput">用户姓名</label>
+        <input id="userNameInput" type="text" placeholder="例如 张三">
+        <label for="concentrationInput">图片对应浓度 mg/L</label>
+        <div class="row">
+          <input id="concentrationInput" type="number" min="0" step="0.001" placeholder="例如 0.5">
+          <button id="addSampleBtn">添加到列表</button>
+        </div>
+        <label for="trainFiles">选择照片（可一张或多张）</label>
+        <input id="trainFiles" type="file" accept="image/*" multiple>
+        <label style="display:flex; gap:8px; align-items:center; margin-top:14px;">
+          <input id="resetArchive" type="checkbox" style="width:auto; min-height:auto;">
+          <span>清空历史训练集后重新训练</span>
+        </label>
+        <div class="actions">
+          <button class="primary" id="trainBtn">开始训练</button>
+          <button id="clearSamplesBtn">清空列表</button>
+        </div>
+        <div class="group-list" id="sampleList"></div>
+      </section>
+
+      <section class="panel">
+        <h2>训练结果</h2>
+        <div class="results" id="trainResults">
+          <div class="message">已有模型后可以只追加一张照片；首次训练或清空历史后训练时至少需要两个不同浓度。训练时会自动剔除偏差过大的照片。</div>
+        </div>
+      </section>
+    </div>
+
+    <div id="predictTab" class="layout hidden">
+      <section class="panel">
+        <h2>上传未知样品</h2>
+        <label for="predictFile">未知浓度照片</label>
+        <input id="predictFile" type="file" accept="image/*">
+        <div class="actions">
+          <button class="primary" id="predictBtn">预测浓度</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>预测结果</h2>
+        <div class="results" id="predictResults">
+          <div class="message">上传未知浓度照片后会显示预测值、最近标准浓度和圆斑质控图。</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const state = { samples: [], status: null };
+    const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:8000" : "";
+    const ADMIN_PASSWORD = "ywfxsy";
+    const $ = (id) => document.getElementById(id);
+
+    function apiUrl(path) {
+      return `${API_BASE}${path}`;
+    }
+
+    function fmt(value, digits = 4) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return "-";
+      return Number(value).toFixed(digits).replace(/\.?0+$/, "");
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function setBusy(button, busy, label) {
+      button.disabled = busy;
+      if (busy) {
+        button.dataset.oldText = button.textContent;
+        button.textContent = label;
+      } else if (button.dataset.oldText) {
+        button.textContent = button.dataset.oldText;
+      }
+    }
+
+    function requireAdminPassword(actionText) {
+      const value = window.prompt(`请输入管理员密码以${actionText}：`);
+      if (value === null) return false;
+      if (value !== ADMIN_PASSWORD) {
+        alert("管理员密码错误，操作已取消。");
+        return false;
+      }
+      return true;
+    }
+
+    function renderStatus(status) {
+      const el = $("modelStatus");
+      if (!status) {
+        el.innerHTML = '<span class="pill">状态未知</span>';
+        return;
+      }
+      if (!status.has_model) {
+        el.innerHTML = `
+          <span class="pill warn">未训练模型</span>
+          <span class="pill ${status.yolo_available ? "ok" : "warn"}">YOLO ${status.yolo_available ? "可用" : "不可用"}</span>
+        `;
+        return;
+      }
+      const range = status.range && status.range.length === 2 ? `${fmt(status.range[0])}-${fmt(status.range[1])} mg/L` : "-";
+      const archiveCount = status.archive_count_after || status.archive_count || status.accepted_count || 0;
+      el.innerHTML = `
+        <span class="pill ok">模型可用</span>
+        <span class="pill">范围 ${range}</span>
+        <span class="pill">累计样本 ${archiveCount}</span>
+        <span class="pill ${status.yolo_model_exists ? "ok" : "warn"}">YOLO ${status.yolo_model_exists ? "已训练" : "兜底定位"}</span>
+      `;
+    }
+
+    async function refreshStatus() {
+      try {
+        const res = await fetch(apiUrl("/api/model/status"));
+        state.status = await res.json();
+        renderStatus(state.status);
+      } catch (error) {
+        $("modelStatus").innerHTML = '<span class="pill bad">状态读取失败</span><span class="pill warn">请确认 python app.py --port 8000 正在运行</span>';
+      }
+    }
+
+    function renderSamples() {
+      const list = $("sampleList");
+      if (!state.samples.length) {
+        list.innerHTML = '<div class="message">尚未添加训练样本。</div>';
+        return;
+      }
+      list.innerHTML = state.samples.map((sample) => `
+        <div class="group-item">
+          <div class="sample-row">
+            <img class="sample-thumb" src="${sample.previewUrl}" alt="training sample">
+            <div>
+              <div class="group-title">
+                <span>${escapeHtml(sample.file.name)}</span>
+                <button data-remove="${sample.id}">删除</button>
+              </div>
+              <div class="muted">用户：${escapeHtml(sample.userName)} · 浓度 ${fmt(sample.concentration)} mg/L</div>
+            </div>
+          </div>
+        </div>
+      `).join("");
+      list.querySelectorAll("[data-remove]").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (!requireAdminPassword("删除该训练样本")) return;
+          const removed = state.samples.find((sample) => sample.id === button.dataset.remove);
+          if (removed && removed.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+          state.samples = state.samples.filter((sample) => sample.id !== button.dataset.remove);
+          renderSamples();
+        });
+      });
+    }
+
+    function addSample() {
+      const userName = $("userNameInput").value.trim();
+      const concentration = Number($("concentrationInput").value);
+      const files = Array.from($("trainFiles").files || []);
+      if (!userName) {
+        alert("请输入用户姓名。");
+        return;
+      }
+      if (!Number.isFinite(concentration) || concentration < 0) {
+        alert("请输入有效浓度。");
+        return;
+      }
+      if (!files.length) {
+        alert("请先选择照片。");
+        return;
+      }
+      files.forEach((file) => {
+        state.samples.push({
+          id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+          concentration,
+          userName,
+          previewUrl: URL.createObjectURL(file),
+          file
+        });
+      });
+      $("concentrationInput").value = "";
+      $("trainFiles").value = "";
+      renderSamples();
+    }
+
+    function metricsTable(metrics, bestModel) {
+      if (!metrics) return "";
+      const rows = Object.entries(metrics).map(([name, metric]) => {
+        if (metric.error) {
+          return `<tr><td>${escapeHtml(name)}</td><td colspan="4">${escapeHtml(metric.error)}</td></tr>`;
+        }
+        const tag = name === bestModel ? " <span class='pill ok'>已选</span>" : "";
+        return `
+          <tr>
+            <td>${escapeHtml(name)}${tag}</td>
+            <td>${fmt(metric.mae)}</td>
+            <td>${fmt(metric.rmse)}</td>
+            <td>${fmt(metric.r2)}</td>
+            <td>${fmt((metric.nearest_accuracy || 0) * 100, 2)}%</td>
+          </tr>
+        `;
+      }).join("");
+      return `
+        <table>
+          <thead><tr><th>模型</th><th>MAE</th><th>RMSE</th><th>R²</th><th>最近标准浓度准确率</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function perConcentrationTable(rows) {
+      if (!rows || !rows.length) return "";
+      return `
+        <table>
+          <thead><tr><th>浓度</th><th>样本</th><th>MAE</th><th>偏差</th><th>标准差</th></tr></thead>
+          <tbody>
+            ${rows.map((row) => `
+              <tr>
+                <td>${fmt(row.concentration)} mg/L</td>
+                <td>${row.count}</td>
+                <td>${fmt(row.mae)}</td>
+                <td>${fmt(row.bias)}</td>
+                <td>${fmt(row.std)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function rejectedList(samples) {
+      if (!samples || !samples.length) return '<div class="message ok">没有样本被拒绝。</div>';
+      return `
+        <div class="reject-list">
+          ${samples.map((sample) => `
+            <div class="reject-item">
+              ${sample.overlay ? `<img src="${sample.overlay}" alt="rejected sample">` : ""}
+              <div class="reject-body">
+                <strong>${escapeHtml(sample.name)}</strong>
+                <div>用户：${escapeHtml(sample.user_name || "-")} · ${fmt(sample.concentration)} mg/L</div>
+                <div class="muted">${escapeHtml(sample.reason)}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function processList(samples) {
+      if (!samples || !samples.length) return '<div class="message">没有返回圆斑识别过程图。</div>';
+      return `
+        <div class="reject-list">
+          ${samples.map((sample) => `
+            <div class="reject-item">
+              ${sample.overlay ? `<img src="${sample.overlay}" alt="spot detection">` : ""}
+              <div class="reject-body">
+                <strong>${escapeHtml(sample.name)}</strong>
+                <div>用户：${escapeHtml(sample.user_name || "-")} · ${fmt(sample.concentration)} mg/L · <span class="pill ${sample.status === "accepted" ? "ok" : "bad"}">${sample.status === "accepted" ? "已采用" : "已拒绝"}</span></div>
+                <div class="muted">定位：${escapeHtml(sample.detector_source || "-")}，置信度 ${fmt(sample.detector_confidence, 3)}</div>
+                ${sample.reason ? `<div class="muted">${escapeHtml(sample.reason)}</div>` : ""}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderTrainResult(data) {
+      if (!data.ok) {
+        const warnings = (data.group_warnings || []).map((item) => `<li>${escapeHtml(item.message)}：可用 ${item.accepted}，拒绝 ${item.rejected}</li>`).join("");
+        $("trainResults").innerHTML = `
+          <div class="message error">${escapeHtml(data.error || "训练失败")}</div>
+          ${warnings ? `<div class="result-block"><strong>浓度组问题</strong><ul>${warnings}</ul></div>` : ""}
+          <div class="result-block"><strong>圆斑识别过程</strong>${processList(data.process_samples)}</div>
+          <div class="result-block"><strong>被拒绝样本</strong>${rejectedList(data.rejected_samples)}</div>
+        `;
+        return;
+      }
+      const model = data.model || {};
+      const bestMetric = data.metrics && data.best_model ? data.metrics[data.best_model] : null;
+      $("trainResults").innerHTML = `
+        <div class="message ok">训练完成，模型已保存。</div>
+        <div class="grid2">
+          <div class="metric"><span class="muted">最佳模型</span><strong>${escapeHtml(data.best_model || "-")}</strong></div>
+          <div class="metric"><span class="muted">MAE</span><strong>${bestMetric ? fmt(bestMetric.mae) : "-"}</strong></div>
+          <div class="metric"><span class="muted">本次新增</span><strong>${model.new_count || 0}</strong></div>
+          <div class="metric"><span class="muted">累计样本</span><strong>${model.archive_count_after || model.accepted_count || 0}</strong></div>
+        </div>
+        <div class="result-block">
+          <strong>训练方式</strong>
+          <div class="muted">历史训练样本 ${model.archive_count_before || 0} 张，本次上传 ${model.new_count || 0} 张；本次训练完成后累计 ${model.archive_count_after || 0} 张。</div>
+        </div>
+        <div class="result-block">
+          <strong>YOLO 状态</strong>
+          <div class="muted">${escapeHtml((data.yolo && data.yolo.message) || "-")}</div>
+        </div>
+        <div class="result-block">
+          <strong>圆斑识别过程</strong>
+          ${processList(data.process_samples)}
+        </div>
+        <div class="result-block">
+          <strong>模型交叉验证</strong>
+          ${metricsTable(data.metrics, data.best_model)}
+        </div>
+        <div class="result-block">
+          <strong>各浓度误差</strong>
+          ${perConcentrationTable(data.per_concentration)}
+        </div>
+        <div class="result-block">
+          <strong>被拒绝样本</strong>
+          ${rejectedList(data.rejected_samples)}
+        </div>
+      `;
+    }
+
+    async function train() {
+      const archiveCount = Number((state.status && (state.status.archive_count ?? state.status.archive_count_after)) || 0);
+      const hasBase = archiveCount > 0;
+      const resetting = $("resetArchive").checked;
+      if (!state.samples.length) {
+        alert("请至少添加一张训练照片。");
+        return;
+      }
+      const newLevels = new Set(state.samples.map((sample) => String(sample.concentration)));
+      if ((resetting || !hasBase) && newLevels.size < 2) {
+        alert("首次训练或清空历史后训练时，至少需要两个不同浓度。已有模型时可以只追加一张照片。");
+        return;
+      }
+      let adminPassword = "";
+      if (resetting) {
+        adminPassword = window.prompt("请输入管理员密码以清空历史训练集后重新训练：") || "";
+        if (adminPassword !== ADMIN_PASSWORD) {
+          alert("管理员密码错误，操作已取消。");
+          return;
+        }
+      }
+      const form = new FormData();
+      if (resetting) {
+        form.append("reset", "1");
+        form.append("admin_password", adminPassword);
+      }
+      form.append("samples", JSON.stringify(state.samples.map((sample) => ({
+        id: sample.id,
+        concentration: sample.concentration,
+        user_name: sample.userName
+      }))));
+      state.samples.forEach((sample) => {
+        form.append(`image_${sample.id}`, sample.file, sample.file.name);
+      });
+      const button = $("trainBtn");
+      setBusy(button, true, "训练中...");
+      $("trainResults").innerHTML = '<div class="message">正在训练，图片较多或 YOLO 可用时会需要更长时间。</div>';
+      try {
+        const res = await fetch(apiUrl("/api/train"), { method: "POST", body: form });
+        const data = await res.json();
+        renderTrainResult(data);
+        await refreshStatus();
+      } catch (error) {
+        $("trainResults").innerHTML = `<div class="message error">${escapeHtml(error.message || error)}</div>`;
+      } finally {
+        setBusy(button, false);
+      }
+    }
+
+    function renderPrediction(data) {
+      if (!data.ok) {
+        $("predictResults").innerHTML = `<div class="message error">${escapeHtml(data.error || "预测失败")}</div>`;
+        return;
+      }
+      if (data.qc_status === "fail") {
+        $("predictResults").innerHTML = `
+          <div class="message error">图片未通过质控：${escapeHtml((data.qc_reasons || []).join("；"))}</div>
+          ${data.overlay ? `<img class="overlay" src="${data.overlay}" alt="qc overlay">` : ""}
+        `;
+        return;
+      }
+      const qcClass = data.qc_status === "warning" ? "warn" : "ok";
+      $("predictResults").innerHTML = `
+        <div class="grid2">
+          <div class="metric"><span class="muted">预测浓度</span><strong>${fmt(data.pred_mg_L)} mg/L</strong></div>
+          <div class="metric"><span class="muted">最近标准浓度</span><strong>${fmt(data.nearest_standard_mg_L)} mg/L</strong></div>
+          <div class="metric"><span class="muted">距最近标准</span><strong>${fmt(data.distance_to_standard)} mg/L</strong></div>
+          <div class="metric"><span class="muted">质控</span><strong><span class="pill ${qcClass}">${escapeHtml(data.qc_status)}</span></strong></div>
+        </div>
+        ${(data.qc_reasons || []).length ? `<div class="message">${escapeHtml(data.qc_reasons.join("；"))}</div>` : ""}
+        <div class="result-block">
+          <strong>检测信息</strong>
+          <div class="muted">定位方式：${escapeHtml((data.detector && data.detector.source) || "-")}，置信度：${fmt(data.detector && data.detector.confidence, 3)}</div>
+        </div>
+        ${data.overlay ? `<img class="overlay" src="${data.overlay}" alt="prediction overlay">` : ""}
+      `;
+    }
+
+    async function predict() {
+      const file = $("predictFile").files[0];
+      if (!file) {
+        alert("请上传未知浓度照片。");
+        return;
+      }
+      const form = new FormData();
+      form.append("image", file, file.name);
+      const button = $("predictBtn");
+      setBusy(button, true, "预测中...");
+      $("predictResults").innerHTML = '<div class="message">正在处理图片。</div>';
+      try {
+        const res = await fetch(apiUrl("/api/predict"), { method: "POST", body: form });
+        const data = await res.json();
+        renderPrediction(data);
+      } catch (error) {
+        $("predictResults").innerHTML = `<div class="message error">${escapeHtml(error.message || error)}</div>`;
+      } finally {
+        setBusy(button, false);
+      }
+    }
+
+    document.querySelectorAll(".tab").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
+        button.classList.add("active");
+        $("trainTab").classList.toggle("hidden", button.dataset.tab !== "train");
+        $("predictTab").classList.toggle("hidden", button.dataset.tab !== "predict");
+      });
+    });
+
+    $("addSampleBtn").addEventListener("click", addSample);
+    $("trainBtn").addEventListener("click", train);
+    $("predictBtn").addEventListener("click", predict);
+    $("clearSamplesBtn").addEventListener("click", () => {
+      if (!state.samples.length) return;
+      if (!requireAdminPassword("清空当前训练样本列表")) return;
+      state.samples.forEach((sample) => {
+        if (sample.previewUrl) URL.revokeObjectURL(sample.previewUrl);
+      });
+      state.samples = [];
+      renderSamples();
+    });
+    window.addEventListener("beforeunload", () => {
+      state.samples.forEach((sample) => {
+        if (sample.previewUrl) URL.revokeObjectURL(sample.previewUrl);
+      });
+    });
+
+    renderSamples();
+    refreshStatus();
+  </script>
+</body>
+</html>
